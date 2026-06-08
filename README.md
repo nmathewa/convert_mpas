@@ -6,8 +6,9 @@ output to a regular lat/lon grid.
 
 ## Installing:
 
-The package uses `numpy` and `netCDF4`. After creating an environment, install
-the project in editable mode:
+The package uses `numpy`, `netCDF4`, `xarray`, `uxarray`, `dask`, and
+`rasterio`. After creating an environment, install the project in editable
+mode:
 
 ```bash
 pip install -e .
@@ -25,6 +26,13 @@ Run the CLI entry point with one or more command-line arguments:
 
 All time records from input files are processed and appended to `latlon.nc`.
 Running the command with no arguments prints a usage summary.
+
+Add `--rasterize` to write a GeoTIFF (`latlon.tif`) with `T2m`, `mslp`, and
+`humidity_2m` bands from the first time step:
+
+```bash
+python -m convert_mpas --rasterize mesh.nc data.nc
+```
 
 By default, the 'convert_mpas' will remap all integer, real, or double-precision
 fields that it finds in the input data file. However, by creating a list of

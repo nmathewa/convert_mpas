@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import sys
 from contextlib import suppress
 
@@ -14,6 +15,7 @@ from .file_output import (
 )
 from .models import OutputHandle, TargetMesh
 from .mpas_mesh import mpas_mesh_free, mpas_mesh_setup
+from .rasterize import rasterize_to_geotiff
 from .remapper import (
     can_remap_field,
     free_target_field,
@@ -38,7 +40,7 @@ from .timer import Timer, timer_start, timer_stop, timer_time
 
 def _usage() -> None:
     print(" ", file=sys.stderr)
-    print("Usage: convert_mpas mesh-file [data-files]", file=sys.stderr)
+    print("Usage: convert_mpas [--rasterize] mesh-file [data-files]", file=sys.stderr)
     print(" ", file=sys.stderr)
     print("If only one file argument is given, both the MPAS mesh information and", file=sys.stderr)
     print("the fields will be read from the specified file.", file=sys.stderr)
@@ -47,14 +49,17 @@ def _usage() -> None:
     print("the subsequent files.", file=sys.stderr)
     print("All time records from input files will be processed and appended to", file=sys.stderr)
     print("the output file.", file=sys.stderr)
+    print("With --rasterize, a GeoTIFF with t2m, mslp, and q2 bands is written.", file=sys.stderr)
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = sys.argv[1:] if argv is None else argv
-    if len(args) < 1:
-        _usage()
-        return 1
+def _parse_args(argv: list[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--rasterize", action="store_true")
+    parser.add_argument("files", nargs="*")
+    return parser.parse_args(argv)
 
+
+def _run_remap(mesh_filename: str, data_files: list[str]) -> int:
     total_timer = Timer()
     read_timer = Timer()
     remap_timer = Timer()
@@ -69,9 +74,6 @@ def main(argv: list[str] | None = None) -> int:
     input_handle = None
     try:
         timer_start(total_timer)
-        mesh_filename = args[0]
-        data_files = [args[0]] if len(args) == 1 else args[1:]
-
         print(f"Reading MPAS mesh information from file '{mesh_filename}'", file=sys.stderr)
         destination_mesh = target_mesh_setup(TargetMesh())
         source_mesh = mpas_mesh_setup(mesh_filename)
@@ -91,7 +93,7 @@ def main(argv: list[str] | None = None) -> int:
 
         include_field_list, exclude_field_list = field_list_init()
 
-        for file_index, data_filename in enumerate(data_files):
+        for data_filename in data_files:
             print(f"Remapping MPAS fields from file '{data_filename}'", file=sys.stderr)
             input_handle, n_records_in = scan_input_open(data_filename)
             try:
@@ -189,6 +191,29 @@ def main(argv: list[str] | None = None) -> int:
             remap_info_free(remap_info)
         if include_field_list is not None and exclude_field_list is not None:
             field_list_finalize(include_field_list, exclude_field_list)
+
+
+def _run_rasterize(mesh_filename: str, data_files: list[str]) -> int:
+    if not data_files:
+        data_files = [mesh_filename]
+    if len(data_files) > 1:
+        print("Rasterize mode uses only the first data file.", file=sys.stderr)
+    rasterize_to_geotiff(mesh_filename, data_files[0], output_filename="latlon.tif")
+    print("Wrote latlon.tif", file=sys.stderr)
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = sys.argv[1:] if argv is None else argv
+    parsed = _parse_args(args)
+    if len(parsed.files) < 1:
+        _usage()
+        return 1
+    mesh_filename = parsed.files[0]
+    data_files = parsed.files[1:]
+    if parsed.rasterize:
+        return _run_rasterize(mesh_filename, data_files)
+    return _run_remap(mesh_filename, data_files or [mesh_filename])
 
 
 if __name__ == "__main__":

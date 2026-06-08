@@ -10,6 +10,12 @@ requires-python = ">=3.11"
 dependencies = [
   "numpy",
   "netCDF4",
+  "xarray",
+  "dask",
+  "distributed",
+  "uxarray",
+  "rasterio",
+  "rioxarray",
 ]
 
 [project.scripts]
