@@ -1,29 +1,30 @@
 convert_mpas
 ============
 
-The 'convert_mpas' project aims to develop a general framework for mapping 
-native MPAS output to other meshes.
+The `convert_mpas` project provides a Python module for mapping native MPAS
+output to a regular lat/lon grid.
 
-## Compiling:
+## Installing:
 
-After selecting a Fortran compiler and associated compiler flags with the FC and FFLAGS
-variables in the top-level Makefile, the 'convert_mpas' program may be compiled by 
-simply running 'make'.
+The package uses `numpy` and `netCDF4`. After creating an environment, install
+the project in editable mode:
 
+```bash
+pip install -e .
+```
 
 ## Running:
 
-The 'convert_mpas' program takes one or more command-line arguments:
-- If only one argument is given, both the MPAS mesh information and 
-  the fields will be read from the specified file.
-- If two or more file arguments are given, the MPAS mesh information will 
-  be read from the first file and fields to be remapped will be read from
-  the subsequent files.
+Run the CLI entry point with one or more command-line arguments:
 
-All time records from input files will be processed and appended to the output 
-file, which is named 'latlon.nc'.
+- If only one argument is given, both the MPAS mesh information and the fields
+  will be read from the specified file.
+- If two or more file arguments are given, the MPAS mesh information will be
+  read from the first file and fields to be remapped will be read from the
+  subsequent files.
 
-Running 'convert_mpas' with no command-line arguments will print a usage summary.
+All time records from input files are processed and appended to `latlon.nc`.
+Running the command with no arguments prints a usage summary.
 
 By default, the 'convert_mpas' will remap all integer, real, or double-precision
 fields that it finds in the input data file. However, by creating a list of

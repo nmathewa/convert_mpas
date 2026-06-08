@@ -1,2 +1,6 @@
-# main executable
-convert_mpas
+*.nc
+*.cdf
+*.hdf
+*.grib
+*.NC4
+*.nc4
